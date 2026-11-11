@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Computer Vision 3 post read</title>
+<style>
+
+:root{
+  --bg:#F3ECD9; --paper:#FBF7EB; --sand:#E7DBBE; --sand-d:#CDBE96; --line:#D5C7A3;
+  --ink:#18261F; --muted:#47574D;
+  --g900:#12392A; --g700:#1D5A41; --g500:#3A8660; --g200:#BCD9C4; --g100:#DDEBDD;
+  --clay:#9A5F33; --clay-100:#EBD5BC;
+  --serif:Georgia,"Iowan Old Style","Palatino Linotype",serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:70px}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.7 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--g700)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:focus-visible{outline:3px solid var(--g500);outline-offset:2px;border-radius:4px}
+
+/* top bar */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(243,236,217,.95);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:18px;padding:8px 20px}
+.brand{font:700 .95rem var(--serif);color:var(--g900);white-space:nowrap}
+.toc{display:flex;gap:4px;overflow-x:auto;scrollbar-width:thin;flex:1}
+.toc a{white-space:nowrap;text-decoration:none;font-size:.82rem;font-weight:600;color:var(--muted);padding:5px 10px;border-radius:999px}
+.toc a:hover{background:var(--sand)}
+.toc a.on{background:var(--g700);color:#fff}
+.bar{height:3px;background:transparent}
+.bar i{display:block;height:100%;width:0;background:var(--g500)}
+
+/* hero */
+.hero{background:var(--g900);color:var(--paper);padding:72px 20px 64px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;inset:0;background:
+  linear-gradient(90deg,rgba(243,236,217,.06) 1px,transparent 1px) 0 0/28px 28px,
+  linear-gradient(0deg,rgba(243,236,217,.06) 1px,transparent 1px) 0 0/28px 28px;pointer-events:none}
+.hero-in{max-width:860px;margin:0 auto;position:relative;z-index:1}
+.kicker{font:700 .78rem var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--g200)}
+.hero h1{font:700 clamp(2.2rem,5.5vw,3.6rem)/1.1 var(--serif);margin:.3em 0 .35em}
+.hero p.lede{font-size:1.2rem;max-width:36em;color:#E9E2CD;margin:0 0 30px}
+.obj{background:rgba(243,236,217,.1);border:1px solid rgba(243,236,217,.25);border-radius:14px;padding:20px 24px}
+.obj h2{font:700 .78rem var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--g200);margin:0 0 10px}
+.obj ol{margin:0;padding-left:1.3em}
+.obj li{margin:.3em 0}
+
+/* layout */
+main{max-width:860px;margin:0 auto;padding:0 20px 40px}
+section.sec{padding-top:64px}
+.sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+.num{font:700 .9rem var(--mono);color:var(--paper);background:var(--g700);border-radius:6px;padding:2px 8px}
+h2.t{font:700 clamp(1.6rem,3.4vw,2.2rem)/1.2 var(--serif);color:var(--g900);margin:0}
+h3{font:700 1.2rem/1.3 var(--serif);color:var(--g900);margin:1.8em 0 .4em}
+p{margin:.7em 0}
+ul,ol{padding-left:1.3em}
+li{margin:.3em 0}
+code{font:.88em var(--mono);background:var(--sand);padding:.1em .35em;border-radius:4px}
+pre{background:var(--g900);color:#EFE9D4;padding:16px 18px;border-radius:12px;overflow-x:auto;font:.85rem/1.55 var(--mono);margin:10px 0}
+pre code{background:none;padding:0;color:inherit;font-size:inherit}
+pre .out{display:block;margin-top:8px;padding-top:8px;border-top:1px dashed rgba(243,236,217,.3);color:var(--g200)}
+details.code{margin:12px 0}
+details.code>summary{cursor:pointer;font-weight:600;color:var(--g700);padding:4px 0}
+
+/* callouts */
+.callout{border-left:5px solid var(--g500);background:var(--g100);border-radius:0 12px 12px 0;padding:12px 18px;margin:18px 0}
+.callout b.lab{display:block;font:700 .75rem var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--g700)}
+.callout.warm{border-color:var(--clay);background:var(--clay-100)}
+.callout.warm b.lab{color:var(--clay)}
+.callout p{margin:.3em 0}
+
+/* tables */
+.tw{overflow-x:auto;margin:14px 0}
+table{border-collapse:collapse;width:100%;background:var(--paper);font-size:.95rem}
+th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{background:var(--g700);color:#fff;font-weight:600}
+td.k{font-weight:700;color:var(--g900)}
+tbody tr:hover td{background:var(--g100)}
+
+/* widget shell */
+.viz{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px 20px 20px;margin:22px 0;box-shadow:0 1px 0 rgba(0,0,0,.03)}
+.viz>.vt{font:700 .78rem var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--g700);margin:0 0 4px}
+.viz>.vd{margin:0 0 14px;color:var(--muted);font-size:.95rem}
+.row{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.col{flex:1 1 260px;min-width:0}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:8px 0 12px}
+.controls label{font-size:.9rem;font-weight:600;color:var(--muted)}
+.btn,.seg button,.chip{font:600 .88rem var(--sans);border:1.5px solid var(--g700);background:transparent;color:var(--g700);padding:6px 13px;border-radius:999px;cursor:pointer}
+.btn:hover,.seg button:hover,.chip:hover{background:var(--g100)}
+.btn.solid,.seg button[aria-pressed=true],.chip[aria-pressed=true]{background:var(--g700);color:#fff}
+.seg{display:inline-flex;gap:6px;flex-wrap:wrap}
+input[type=number],select{font:600 .95rem var(--mono);padding:6px 8px;border:1.5px solid var(--sand-d);border-radius:8px;background:#fff;color:var(--ink);width:5.2em}
+select{width:auto;font-family:var(--sans)}
+input[type=range]{accent-color:var(--g700);width:100%;max-width:300px}
+.readout{background:var(--g100);border-radius:10px;padding:10px 14px;font-size:.95rem;margin-top:10px}
+.readout b{font-family:var(--mono)}
+.big{font:700 clamp(1.8rem,5vw,2.6rem)/1.1 var(--serif);color:var(--g900)}
+.sw{display:inline-block;width:1.4em;height:1.4em;border-radius:5px;border:1.5px solid rgba(0,0,0,.35);vertical-align:-.3em;margin-right:.4em}
+.cap{font-size:.85rem;color:var(--muted);margin:6px 0 0}
+.mono{font-family:var(--mono)}
+
+/* grids */
+.g{display:grid;gap:2px;grid-template-columns:repeat(var(--cols),1fr)}
+.g .c{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font:600 .8rem/1 var(--mono);border-radius:3px;background:var(--sand);color:var(--ink);overflow:hidden}
+.g.tight{gap:1px}
+.px{font-size:.6rem!important}
+.c.sel{outline:3px solid var(--ink);outline-offset:-3px;z-index:1}
+#pix-grid{max-width:480px;cursor:crosshair;border:2px solid var(--g900);border-radius:6px;padding:0;background:var(--g900)}
+#pix-grid:focus-visible{outline:3px solid var(--g500);outline-offset:3px}
+.mat{max-width:260px}
+.mat .c{font-size:1rem;aspect-ratio:1.15}
+.hl{background:var(--g200)!important;outline:2px solid var(--g700);outline-offset:-2px}
+.obj-c{background:var(--g500)!important;color:#fff}
+.w-c{box-shadow:inset 0 0 0 2px var(--clay)}
+.pad-c{background:repeating-linear-gradient(45deg,var(--sand),var(--sand) 3px,var(--sand-d) 3px,var(--sand-d) 5px)!important}
+.lbl{font:700 .78rem var(--sans);color:var(--muted);margin:0 0 6px;text-transform:uppercase;letter-spacing:.06em}
+button.c{border:0;cursor:pointer;font:inherit}
+.filt{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;max-width:200px}
+.filt input{width:100%;text-align:center;padding:8px 2px}
+.sumline{font:.9rem/1.5 var(--mono);background:var(--g900);color:#EFE9D4;border-radius:10px;padding:10px 14px;overflow-x:auto;margin-top:10px}
+.arrow{align-self:center;font-size:1.6rem;color:var(--g700);padding:0 4px}
+
+/* pills */
+.pills{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+.pill{min-width:64px;text-align:center;border-radius:10px;padding:6px 10px;color:#fff;font-weight:700;line-height:1.2}
+.pill small{display:block;font:600 .72rem var(--sans);opacity:.9}
+.pill span{font:700 1.3rem var(--mono)}
+.p-H{background:var(--g700)}.p-W{background:var(--g500)}.p-C{background:var(--clay)}.p-B{background:var(--g900)}
+
+/* math */
+.math{font:1.1rem var(--serif);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 18px;margin:14px 0;overflow-x:auto;text-align:center}
+.frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 .25em;font-size:.95em}
+.frac>span:first-child{border-bottom:1.5px solid currentColor;padding:0 .3em}
+.frac>span:last-child{padding:0 .3em}
+sub{font-size:.7em}
+
+/* pipeline */
+.pipe{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.node{font:700 .9rem var(--sans);padding:10px 14px;border-radius:12px;border:2px solid var(--g700);background:var(--paper);color:var(--g900);cursor:pointer}
+.node[aria-pressed=true]{background:var(--g700);color:#fff}
+.node.io{border-style:dashed;cursor:default;border-color:var(--sand-d);color:var(--muted)}
+.grp{border:2px dashed var(--g500);border-radius:16px;padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px}
+.grp>.gl{font:700 .72rem var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--g700)}
+.grp>.ns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sep{color:var(--g700);font-weight:700}
+
+/* bars */
+.bars .br{display:grid;grid-template-columns:110px 1fr;gap:12px;align-items:center;margin:8px 0;font-size:.92rem}
+.bars .tr{background:var(--sand);border-radius:8px;height:26px;overflow:hidden;position:relative}
+.bars .fl{height:100%;background:var(--g700);min-width:3px;border-radius:8px 0 0 8px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;color:#fff;font:700 .78rem var(--mono);white-space:nowrap}
+.bars .fl.alt{background:var(--clay)}
+.bars .vl{margin-left:8px;font:700 .85rem var(--mono);color:var(--ink)}
+
+/* layer ribbon */
+.layers{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.layer{text-align:left;border:2px solid var(--g700);background:var(--paper);border-radius:12px;padding:10px;cursor:pointer;font:inherit;color:var(--ink)}
+.layer[aria-pressed=true]{background:var(--g700);color:#fff}
+.layer b{display:block;font-size:.85rem}
+.layer span{display:block;font:.78rem var(--mono);margin-top:4px;word-break:break-all}
+
+/* strip (stride/padding) */
+.strip{display:flex;gap:2px;overflow-x:auto;padding:4px 0}
+.strip .s{flex:0 0 auto;width:16px;height:30px;border-radius:3px;background:var(--g200)}
+.strip .s.p{background:repeating-linear-gradient(45deg,var(--sand),var(--sand) 3px,var(--sand-d) 3px,var(--sand-d) 5px)}
+.strip .s.w{background:var(--g700)}
+.strip .o{background:var(--g500);opacity:.35}
+.strip .o.cur{opacity:1;background:var(--clay)}
+
+/* quiz */
+.quiz{background:var(--g100);border:1px solid var(--g200);border-radius:14px;padding:16px 20px;margin:20px 0}
+.quiz .ql{font:700 .75rem var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--g700);margin:0}
+.quiz .qt{font-weight:600;margin:.3em 0 .6em}
+.quiz fieldset{border:0;padding:0;margin:0}
+.qo{margin:6px 0}
+.qo input{position:absolute;opacity:0}
+.qo label{display:block;border:2px solid var(--g200);background:var(--paper);padding:9px 14px;border-radius:10px;cursor:pointer}
+.qo label:hover{border-color:var(--g500)}
+.qo input:focus-visible+label{outline:3px solid var(--g500);outline-offset:2px}
+.qo.right label{border-color:var(--g700);background:#fff;box-shadow:inset 6px 0 0 var(--g700)}
+.qo.wrong label{border-color:var(--clay);background:var(--clay-100);box-shadow:inset 6px 0 0 var(--clay)}
+.qfb{margin-top:10px;font-size:.95rem}
+
+/* details / flashcards */
+details.dq{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:2px 16px;margin:10px 0}
+details.dq summary{cursor:pointer;font-weight:600;padding:10px 0;color:var(--g900)}
+.fcs{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.fc{text-align:left;font:inherit;color:var(--ink);background:var(--paper);border:2px solid var(--g700);border-radius:14px;padding:16px;cursor:pointer;min-height:150px}
+.fc .q{font-weight:700;color:var(--g900)}
+.fc .a{display:none;margin-top:10px;padding-top:10px;border-top:1px dashed var(--g500)}
+.fc[aria-expanded=true]{background:var(--g100)}
+.fc[aria-expanded=true] .a{display:block}
+.fc .hint{display:block;margin-top:10px;font-size:.8rem;color:var(--g700);font-weight:600}
+.fc[aria-expanded=true] .hint{display:none}
+.take{counter-reset:t;list-style:none;padding:0}
+.take li{counter-increment:t;display:flex;gap:14px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:8px 0}
+.take li::before{content:counter(t);flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--g700);color:#fff;font:700 .9rem var(--sans);display:grid;place-items:center}
+
+footer{background:var(--g900);color:var(--g200);text-align:center;padding:28px 20px;font:600 .95rem var(--serif);margin-top:40px}
+
+@media (max-width:600px){
+  body{font-size:16px}
+  .hero{padding:48px 16px 44px}
+  .viz{padding:14px}
+  .brand{display:none}
+  .bars .br{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+.chart{width:100%;height:auto;display:block;touch-action:pan-y}
+.chart text{font-family:var(--sans);fill:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin:6px 0 4px;font-size:.85rem;font-weight:600}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend svg{width:34px;height:12px}
+.tag{display:inline-block;font:700 .75rem var(--sans);background:var(--g100);color:var(--g700);border:1px solid var(--g200);border-radius:999px;padding:1px 10px;margin:2px 3px 2px 0}
+.cards3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:14px 0}
+.mini{background:var(--paper);border:1px solid var(--line);border-top:5px solid var(--g500);border-radius:12px;padding:12px 16px}
+.mini.c2{border-top-color:var(--clay)}.mini.c3{border-top-color:var(--g900)}
+.mini b{display:block;font:700 .78rem var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--g700)}
+.unit{aspect-ratio:1;border-radius:50%;background:var(--g500);display:flex;align-items:center;justify-content:center;color:#fff;font:700 .8rem var(--mono)}
+.unit.off{background:repeating-linear-gradient(45deg,var(--sand),var(--sand) 3px,var(--sand-d) 3px,var(--sand-d) 5px);color:var(--ink);border:2px dashed var(--clay)}
+.frame{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font:700 .78rem var(--mono);color:#fff;border:3px solid transparent}
+.frame.tr{background:var(--g700)}.frame.va{background:var(--clay)}
+.frame.dup{border-color:var(--ink);box-shadow:0 0 0 2px #fff inset}
+.flow{display:flex;flex-direction:column;gap:6px;max-width:420px;margin:14px auto}
+.flow div{background:var(--g700);color:#fff;border-radius:10px;padding:10px 16px;text-align:center;font-weight:600}
+.flow div:nth-child(even){background:transparent;color:var(--g700);padding:0;font-size:1.3rem;line-height:1}
+.flow div:last-child{background:var(--g900)}
+.ex{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:8px 0}
+.ex .nums{font:.95rem/1.6 var(--mono);background:var(--g900);color:#EFE9D4;border-radius:8px;padding:8px 12px;margin:6px 0;white-space:pre-wrap}
+.step6{counter-reset:s;list-style:none;padding:0}
+.step6 li{counter-increment:s;display:flex;gap:12px;margin:6px 0}
+.step6 li::before{content:counter(s);flex:0 0 28px;height:28px;border-radius:50%;background:var(--g700);color:#fff;font:700 .85rem var(--sans);display:grid;place-items:center}
+
+.blk{flex:1 1 90px;border:2px solid var(--g700);border-radius:12px;padding:10px 8px;text-align:center;background:var(--g100);font-size:.82rem;min-width:84px}
+.blk b{display:block;font-size:.88rem;color:var(--g900)}
+.blk .st{display:block;margin-top:4px;font:700 .72rem var(--sans);letter-spacing:.06em;text-transform:uppercase}
+.blk.fz{background:var(--sand);border-style:dashed;border-color:var(--sand-d);color:var(--muted)}
+.blk.fz b{color:var(--muted)}
+.blk.hd{background:var(--g700);color:#fff}.blk.hd b{color:#fff}
+.tree{font:.9rem/1.6 var(--mono);background:var(--g900);color:#EFE9D4;border-radius:12px;padding:14px 18px;white-space:pre;overflow-x:auto}
+.dot{aspect-ratio:1;border-radius:6px;border:2px solid var(--g700);background:var(--g500);color:#fff;font:700 .7rem var(--mono);cursor:pointer}
+.dot.bad{background:var(--clay-100);color:var(--clay);border-color:var(--clay)}
+.chk{display:flex;gap:10px;align-items:flex-start;margin:6px 0}
+.chk input{margin-top:.45em;accent-color:var(--g700);width:18px;height:18px}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <span class="brand">Computer Vision 3 post read</span>
+    <nav class="toc" aria-label="Sections" id="toc"></nav>
+  </div>
+  <div class="bar" aria-hidden="true"><i id="prog"></i></div>
+</header>
+
+<div class="hero">
+  <div class="hero-in">
+    <div class="kicker">Computer Vision · Transfer learning</div>
+    <h1>Computer Vision 3 post read</h1>
+    <p class="lede">Borrow knowledge, build faster. How a CNN pretrained on millions of images can solve a small landmark-recognition problem, and how to do it without fooling yourself.</p>
+    <div class="obj">
+      <h2>By the end you will be able to</h2>
+      <ol>
+        <li>Explain transfer learning and why pretrained models help when labeled data is limited</li>
+        <li>Distinguish feature extraction (freeze the backbone) from fine-tuning (unfreeze selected pretrained layers)</li>
+        <li>Explain why the final classification head must match the number of target classes</li>
+        <li>Prepare images using the preprocessing expected by an ImageNet-pretrained model</li>
+        <li>Compare a scratch model and a transfer-learning model fairly using validation and test data</li>
+        <li>Diagnose common transfer-learning mistakes</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<main>
+
+<!-- 1 HOOK -->
+<section class="sec" id="hook" aria-labelledby="h-hook" data-nav="The problem">
+  <div class="sec-head"><span class="num">01</span><h2 class="t" id="h-hook">The 10-class landmark problem</h2></div>
+  <p>If a CNN has already learned useful visual features from millions of images, should we train all of those weights from zero for our small landmark dataset?</p>
+  <p>Imagine a landmark-recognition app. The training set has only about 70 images per class, across 10 landmark categories. A large CNN trained from scratch may struggle, because it must learn edges, textures, shapes <i>and</i> landmark-specific patterns from that small dataset.</p>
+  <div class="quiz" data-quiz="q0"></div>
+  <div class="callout"><b class="lab">Connecting to the overfitting lesson</b><p>High training accuracy is not enough. Transfer learning can improve sample efficiency, but it does not remove the need for validation, careful splits, or generalization checks.</p></div>
+</section>
+
+<!-- 2 WHAT IS TL -->
+<section class="sec" id="what" aria-labelledby="h-what" data-nav="What is TL">
+  <div class="sec-head"><span class="num">02</span><h2 class="t" id="h-what">What is transfer learning?</h2></div>
+  <p>Transfer learning reuses knowledge learned on a <b>source task</b> to help solve a related <b>target task</b>.</p>
+  <ul>
+    <li><b>Source task:</b> classify many ImageNet categories.</li>
+    <li><b>Target task:</b> classify 10 kinds of famous landmarks.</li>
+    <li><b>Reusable knowledge:</b> early visual patterns such as edges, corners, textures, and shapes.</li>
+    <li><b>Task-specific part:</b> the final classifier that maps features to the target landmark labels.</li>
+  </ul>
+
+  <div class="viz" id="swap-viz">
+    <p class="vt">Visualizer · Reuse the backbone, swap the head</p>
+    <p class="vd">ImageNet images train a pretrained CNN. We keep the backbone and attach a new classifier head for 10 landmark classes.</p>
+    <div class="controls"><div class="seg" id="sw-seg" role="group" aria-label="Model"></div></div>
+    <div class="pipe" id="sw-pipe"></div>
+    <div class="readout" id="sw-read" aria-live="polite"></div>
+  </div>
+
+  <h3>Why does this help?</h3>
+  <p>A CNN trained on a large dataset has already learned useful filters. Reusing those weights can:</p>
+  <ul><li>reduce the amount of task-specific data needed;</li><li>shorten training time;</li><li>provide a stronger starting point than random initialization.</li></ul>
+  <div class="callout warm"><b class="lab">Important</b><p>Transfer learning is not guaranteed to win. It depends on the similarity between source and target images, data quality, preprocessing, and how the model is adapted.</p></div>
+  <p>Does a pretrained model already know the names of our 10 landmarks? <b>No.</b> Its original classifier predicts source-dataset classes, so we replace the final head to predict our target classes.</p>
+</section>
+
+<!-- 3 HIERARCHY -->
+<section class="sec" id="hier" aria-labelledby="h-hier" data-nav="Feature hierarchy">
+  <div class="sec-head"><span class="num">03</span><h2 class="t" id="h-hier">CNNs learn a hierarchy of features</h2></div>
+  <p>A useful intuition is that CNN layers learn increasingly task-specific patterns. Step through the network below to see which parts are natural to keep and which to replace.</p>
+  <div class="viz" id="hier-viz">
+    <p class="vt">Visualizer · Depth explorer</p>
+    <div class="pipe" id="hi-pipe"></div>
+    <div class="readout" id="hi-read" aria-live="polite"></div>
+  </div>
+  <div class="callout"><b class="lab">Note</b><p>These are tendencies, not rigid rules. Individual filters are not guaranteed to have a human-interpretable meaning.</p></div>
+  <div class="quiz" data-quiz="q1"></div>
+</section>
+
+<!-- 4 STRATEGIES -->
+<section class="sec" id="strat" aria-labelledby="h-strat" data-nav="Two strategies">
+  <div class="sec-head"><span class="num">04</span><h2 class="t" id="h-strat">Two strategies: feature extraction vs. fine-tuning</h2></div>
+  <div class="row">
+    <div class="col"><div class="mini"><b>Strategy 1 · Feature extraction</b><ul style="margin:.4em 0 0"><li>Keep the pretrained backbone <b>frozen</b>.</li><li>Train only the new classifier head.</li><li>Usually faster and less prone to overfitting on very small datasets.</li><li>A strong first baseline.</li></ul></div></div>
+    <div class="col"><div class="mini c2"><b>Strategy 2 · Fine-tuning</b><ul style="margin:.4em 0 0"><li>Start from pretrained weights.</li><li><b>Unfreeze</b> some or all pretrained layers and continue training.</li><li>Can adapt features to the target domain.</li><li>Needs care: a small learning rate for pretrained layers, and monitor validation.</li></ul></div></div>
+  </div>
+
+  <div class="viz" id="unf-viz">
+    <p class="vt">Visualizer · How much of VGG16 is trainable?</p>
+    <p class="vd">VGG16 has five convolutional blocks. Move the slider to unfreeze the last <i>k</i> blocks; the new head is always trainable. Parameter counts are exact for torchvision's VGG16 with the 512-unit head used below.</p>
+    <div class="controls"><label for="unf-r">Unfrozen conv blocks</label><input type="range" id="unf-r" min="0" max="5" value="0"> <b class="mono" id="unf-v"></b></div>
+    <div class="pipe" id="unf-blocks" style="flex-wrap:wrap;align-items:stretch"></div>
+    <div class="bars" id="unf-bars"></div>
+    <div class="readout" id="unf-read" aria-live="polite"></div>
+  </div>
+
+  <div class="tw"><table>
+    <thead><tr><th>Question</th><th>Feature extraction</th><th>Fine-tuning</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Backbone weights change?</td><td>No</td><td>Selected/all unfrozen weights change</td></tr>
+      <tr><td class="k">Trainable parameters</td><td>Fewer</td><td>More</td></tr>
+      <tr><td class="k">Compute cost</td><td>Usually lower</td><td>Usually higher</td></tr>
+      <tr><td class="k">Risk on a tiny dataset</td><td>Often lower</td><td>Can overfit more easily</td></tr>
+      <tr><td class="k">Best first try?</td><td>Usually yes</td><td>Try if validation suggests it may help</td></tr>
+    </tbody>
+  </table></div>
+  <div class="quiz" data-quiz="q2"></div>
+</section>
+
+<!-- 5 DATASET -->
+<section class="sec" id="data" aria-labelledby="h-data" data-nav="Dataset">
+  <div class="sec-head"><span class="num">05</span><h2 class="t" id="h-data">Dataset and experiment design</h2></div>
+  <p>This post uses a 10-class landmark dataset arranged in folders. <code>torchvision.datasets.ImageFolder</code> reads the subfolder names as labels.</p>
+  <div class="tree">New_landmark_images/
+├── train/
+│   ├── class_1/
+│   └── ...
+├── validation/
+│   ├── class_1/
+│   └── ...
+└── test/
+    ├── class_1/
+    └── ...</div>
+
+  <div class="viz" id="split-viz">
+    <p class="vt">Visualizer · Split sizes and class mapping</p>
+    <div class="bars" id="sp-bars"></div>
+    <div class="lbl" style="margin-top:14px">Class → index (identical in every split)</div>
+    <div class="controls" id="sp-cls" role="group" aria-label="Classes"></div>
+    <div class="readout" id="sp-read" aria-live="polite"></div>
+  </div>
+
+  <div class="viz" id="map-viz">
+    <p class="vt">Visualizer · Why the mapping must match</p>
+    <p class="vd">Toy example: the model predicts index 3 for an image of the Eiffel Tower. Does the evaluation agree?</p>
+    <div class="controls"><div class="seg" id="mp-seg" role="group" aria-label="Mapping"></div></div>
+    <div class="readout" id="mp-read" aria-live="polite"></div>
+  </div>
+
+  <h3>Before training, check</h3>
+  <div id="chk"></div>
+  <p>Inspect the data first: class imbalance or incorrect labels can make accuracy misleading.</p>
+  <p class="cap">Dataset file used in the source notebook: <a href="https://drive.google.com/uc?id=11LQILlalZGi_skLIipnpTyh-At77B_j6">Google Drive link</a> (it must contain <code>train/</code>, <code>validation/</code> and <code>test/</code>).</p>
+  <details class="code"><summary>Setup and data-inspection code</summary>
+<pre><code>import os, glob, random, zipfile, subprocess, sys
+import numpy as np
+import matplotlib.pyplot as plt
+from PIL import Image
+import torch, torch.nn as nn, torch.optim as optim
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms, models
+
+SEED = 42
+random.seed(SEED); np.random.seed(SEED); torch.manual_seed(SEED)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+raw_train = datasets.ImageFolder(os.path.join(DATA_DIR, "train"))
+raw_val = datasets.ImageFolder(os.path.join(DATA_DIR, "validation"))
+raw_test = datasets.ImageFolder(os.path.join(DATA_DIR, "test"))
+assert raw_train.class_to_idx == raw_val.class_to_idx == raw_test.class_to_idx, \
+    "Class mappings differ across splits. Check folder names."
+<span class="out">Train: 737 | Validation: 155 | Test: 43</span></code></pre></details>
+</section>
+
+<!-- 6 PREPROCESSING -->
+<section class="sec" id="prep" aria-labelledby="h-prep" data-nav="Preprocessing">
+  <div class="sec-head"><span class="num">06</span><h2 class="t" id="h-prep">Preprocessing is part of the pretrained model</h2></div>
+  <p>Resizing to 224×224 and converting to tensors is only the minimum. For an ImageNet-pretrained torchvision VGG16, use the model's expected preprocessing: resize/crop as its weights specify, then normalize the channels with the ImageNet mean and standard deviation.</p>
+  <p><b>Why does this matter?</b> The pretrained model learned from inputs prepared in a particular way. Different scaling and normalization can shift the input distribution and reduce performance. The weights object supplies the recommended transform, which is safer than guessing.</p>
+
+  <div class="viz" id="prep-viz">
+    <p class="vt">Visualizer · What the preprocessing does to one pixel</p>
+    <p class="vd">The transform resizes to 256, crops to 224, then normalizes each channel as (value − mean) / std on 0–1 values. Enter a pixel (0–255).</p>
+    <div class="pipe"><div class="node io">Resize 256</div><span class="sep">→</span><div class="node io">Crop 224</div><span class="sep">→</span><div class="node io">To tensor (0–1)</div><span class="sep">→</span><div class="node io" style="border-style:solid;border-color:var(--g700);color:var(--g900)">Normalize</div></div>
+    <div class="tw"><table>
+      <thead><tr><th>Channel</th><th>Pixel (0–255)</th><th>Scaled</th><th>Mean</th><th>Std</th><th>Normalized</th></tr></thead>
+      <tbody id="pp-tab"></tbody>
+    </table></div>
+    <div class="controls" id="pp-pre"></div>
+  </div>
+<pre><code>weights = models.VGG16_Weights.IMAGENET1K_V1
+preprocess = weights.transforms()
+print(preprocess)
+<span class="out">ImageClassification(
+    crop_size=[224]
+    resize_size=[256]
+    mean=[0.485, 0.456, 0.406]
+    std=[0.229, 0.224, 0.225]
+    interpolation=InterpolationMode.BILINEAR
+)</span></code></pre>
+  <div class="quiz" data-quiz="q3"></div>
+</section>
+
+<!-- 7 BUILD -->
+<section class="sec" id="build" aria-labelledby="h-build" data-nav="Build the model">
+  <div class="sec-head"><span class="num">07</span><h2 class="t" id="h-build">Build the transfer-learning model</h2></div>
+  <ol class="step6">
+    <li>Load pretrained VGG16 weights.</li>
+    <li>Freeze the pretrained parameters.</li>
+    <li>Replace the classifier so its output dimension equals the number of landmark classes.</li>
+    <li>Train only the new classifier at first.</li>
+  </ol>
+  <p>In PyTorch a frozen parameter has <code>requires_grad = False</code>; a new layer is trainable by default.</p>
+
+  <div class="viz" id="build-viz">
+    <p class="vt">Visualizer · Anatomy of the adapted VGG16</p>
+    <p class="vd">Select a part to see what stayed, what changed, and how many parameters it holds.</p>
+    <div class="pipe" id="bd-pipe"></div>
+    <div class="readout" id="bd-read" aria-live="polite"></div>
+    <div class="bars" id="bd-bars" style="margin-top:12px"></div>
+  </div>
+
+  <ul>
+    <li><b>Stayed the same:</b> the pretrained convolutional feature extractor.</li>
+    <li><b>Changed:</b> the final classifier, because the target task has a different number of classes.</li>
+    <li><b>Trainable:</b> new classifier parameters.</li>
+    <li><b>Frozen:</b> pretrained backbone parameters.</li>
+  </ul>
+  <p>This head uses a small hidden layer and dropout. A single linear output layer is also a valid design; the small head is a teaching choice, not a guarantee of higher accuracy.</p>
+  <details class="code"><summary>Code and output</summary>
+<pre><code>weights = models.VGG16_Weights.IMAGENET1K_V1
+model = models.vgg16(weights=weights)
+
+for param in model.parameters():
+    param.requires_grad = False          # freeze
+
+# VGG16's pooled feature vector has 512 * 7 * 7 = 25088 features for 224x224 inputs.
+model.classifier = nn.Sequential(
+    nn.Linear(25088, 512),
+    nn.ReLU(inplace=True),
+    nn.Dropout(p=0.3),
+    nn.Linear(512, num_classes)
+)
+model = model.to(device)
+<span class="out">Classes: 10
+Total parameters: 27,565,386
+Trainable parameters: 12,850,698
+Frozen parameters: 14,714,688</span></code></pre></details>
+  <div class="quiz" data-quiz="q4"></div>
+</section>
+
+<!-- 8 TRAIN -->
+<section class="sec" id="train" aria-labelledby="h-train" data-nav="Train the head">
+  <div class="sec-head"><span class="num">08</span><h2 class="t" id="h-train">Train and validate the classifier head</h2></div>
+  <p>Train the new head, use <b>validation</b> performance to monitor progress and choose the best checkpoint, and leave the test set untouched until the final evaluation. If the target dataset is small but similar to ImageNet, we expect faster convergence and better validation performance than scratch training. That is a <i>hypothesis to test</i>, not a guaranteed result.</p>
+  <div class="viz" id="run-tr"></div>
+  <div class="tw"><table><thead><tr><th>Epoch</th><th>Train loss</th><th>Train acc</th><th>Val loss</th><th>Val acc</th></tr></thead><tbody id="tr-tab"></tbody></table></div>
+  <p>Validation accuracy was about 81% after epoch 1 and about 90% by epoch 5; your numbers will differ slightly. The best checkpoint is chosen by lowest validation loss, which in this run is epoch 5.</p>
+
+  <h3>Evidence checkpoint</h3>
+  <div class="viz" id="ev-viz">
+    <p class="vt">Visualizer · Reading the curves</p>
+    <div class="controls"><div class="seg" id="ev-seg" role="group" aria-label="Pattern"></div></div>
+    <div class="readout" id="ev-read" aria-live="polite"></div>
+  </div>
+  <p>Do not assume one run proves transfer learning is better. A fair comparison keeps the split, preprocessing where appropriate, evaluation metric, and training budget explicit.</p>
+  <details class="code"><summary>Loaders and training loop</summary>
+<pre><code>train_ds = datasets.ImageFolder(os.path.join(DATA_DIR, "train"), transform=preprocess)
+val_ds = datasets.ImageFolder(os.path.join(DATA_DIR, "validation"), transform=preprocess)
+test_ds = datasets.ImageFolder(os.path.join(DATA_DIR, "test"), transform=preprocess)
+assert train_ds.class_to_idx == val_ds.class_to_idx == test_ds.class_to_idx
+
+def fit_model(model, train_loader, val_loader, epochs=5, lr=1e-3):
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam((p for p in model.parameters() if p.requires_grad), lr=lr)
+    best_val_loss = float("inf"); best_state = None
+    for epoch in range(epochs):
+        train_loss, train_acc = run_epoch(model, train_loader, criterion, optimizer)
+        val_loss, val_acc = run_epoch(model, val_loader, criterion)
+        if val_loss &lt; best_val_loss:
+            best_val_loss = val_loss
+            best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
+    if best_state is not None:
+        model.load_state_dict(best_state)</code></pre></details>
+</section>
+
+<!-- 9 TEST -->
+<section class="sec" id="test" aria-labelledby="h-test" data-nav="Test once">
+  <div class="sec-head"><span class="num">09</span><h2 class="t" id="h-test">Final evaluation: use the test set once</h2></div>
+  <p>Accuracy is the proportion of correctly classified examples. <b>Rule:</b> use validation data for choices; use test data for the final estimate. For a 10-class task, also compare with the validation results and inspect class-wise mistakes when possible.</p>
+  <div class="row"><div class="col"><div class="readout"><b>Final test loss:</b> 0.0661</div></div><div class="col"><div class="readout"><b>Final test accuracy:</b> 97.67%</div></div></div>
+  <div class="viz" id="test-viz">
+    <p class="vt">Visualizer · What one image is worth</p>
+    <p class="vd">The test set has 43 images. Click an image to toggle it between correct and wrong, and watch the score move. Start: one wrong.</p>
+    <div class="g" id="ts-g" style="--cols:11;max-width:520px;gap:4px"></div>
+    <div class="readout" id="ts-read" aria-live="polite"></div>
+  </div>
+  <p>One image changes the score by about 2.3 points, and 97.67% means 42 of 43 correct. Treat the number as a rough estimate. It can be higher than the validation accuracy (about 90%) simply because the test set is small and a different sample.</p>
+  <details class="code"><summary>Code</summary>
+<pre><code>criterion = nn.CrossEntropyLoss()
+test_loss, test_acc = run_epoch(model, test_loader, criterion)
+print(f"Final test loss: {test_loss:.4f}")
+print(f"Final test accuracy: {test_acc*100:.2f}%")</code></pre></details>
+</section>
+
+<!-- 10 FINETUNE -->
+<section class="sec" id="ft" aria-labelledby="h-ft" data-nav="Fine-tuning">
+  <div class="sec-head"><span class="num">10</span><h2 class="t" id="h-ft">Fine-tuning: when the head is not enough</h2></div>
+  <p>If the frozen feature extractor plateaus, some pretrained features may need to adapt to the target domain. Fine-tuning is the next experiment.</p>
+  <h3>Safe fine-tuning recipe</h3>
+  <ol class="step6">
+    <li>Unfreeze only the last convolutional block initially.</li>
+    <li>Use a smaller learning rate for pretrained weights than for a newly initialized head.</li>
+    <li>Monitor validation loss and accuracy.</li>
+    <li>Keep the best validation checkpoint.</li>
+    <li>Stop if validation performance deteriorates.</li>
+  </ol>
+  <div class="viz" id="lr-viz">
+    <p class="vt">Visualizer · Two learning rates in one optimizer</p>
+    <div class="bars" id="lr-bars"></div>
+    <div class="readout">Trainable parameters after unfreezing the last block (<code>model.features[24:]</code>): <b>19,930,122</b> = 12,850,698 (head) + 7,079,424 (last conv block).</div>
+    <p class="cap">Smaller steps for pretrained weights, because they already encode useful features and large updates can damage them.</p>
+  </div>
+  <div class="viz" id="run-ft"></div>
+  <p>Over three epochs validation accuracy moved 0.916 → 0.923 → 0.910 while training accuracy stayed at about 1.0. This was an optional run; compare against the frozen baseline and keep the best validation checkpoint.</p>
+  <details class="code"><summary>Code</summary>
+<pre><code>for param in model.features.parameters():
+    param.requires_grad = False
+for param in model.features[24:].parameters():   # last VGG16 block
+    param.requires_grad = True
+for param in model.classifier.parameters():
+    param.requires_grad = True
+
+optimizer_finetune = optim.Adam([
+    {"params": model.features[24:].parameters(), "lr": 1e-5},
+    {"params": model.classifier.parameters(), "lr": 1e-4},
+])</code></pre></details>
+  <div class="quiz" data-quiz="q5"></div>
+</section>
+
+<!-- 11 TROUBLE -->
+<section class="sec" id="trouble" aria-labelledby="h-tb" data-nav="Troubleshooting">
+  <div class="sec-head"><span class="num">11</span><h2 class="t" id="h-tb">Troubleshooting transfer learning</h2></div>
+  <div class="viz" id="tb-viz">
+    <p class="vt">Visualizer · Symptom → checks</p>
+    <div class="controls" id="tb-seg" role="group" aria-label="Symptom"></div>
+    <div class="readout" id="tb-read" aria-live="polite"></div>
+  </div>
+  <h3>Common implementation mistakes</h3>
+  <ul>
+    <li>Forgetting to replace the final classifier.</li>
+    <li>Forgetting to freeze parameters in feature-extraction mode.</li>
+    <li>Passing frozen parameters to the optimizer unnecessarily.</li>
+    <li>Using ImageNet weights with the wrong normalization.</li>
+    <li>Selecting hyperparameters based on test performance.</li>
+    <li>Assuming frozen weights mean the model needs no training; the new head still must learn.</li>
+  </ul>
+</section>
+
+<!-- 12 AI ACTIVITY -->
+<section class="sec" id="ask" aria-labelledby="h-ask" data-nav="Ask, challenge, verify">
+  <div class="sec-head"><span class="num">12</span><h2 class="t" id="h-ask">Ask, challenge, verify</h2></div>
+  <p><b>Scenario:</b> a team has 700 labeled landmark images across 10 classes. Their VGG16 model reports:</p>
+  <div class="viz" id="sc-viz">
+    <p class="vt">Visualizer · Train vs. validation accuracy</p>
+    <div class="bars" id="sc-bars"></div>
+  </div>
+  <p>Write your own diagnosis first. Then, if you ask an AI assistant for three plausible reasons why fine-tuning all VGG16 layers raised training accuracy but lowered validation accuracy (with one experiment for each), do not accept the answer automatically: mark each suggestion <b>supported</b>, <b>plausible but unverified</b>, or <b>unsupported</b>.</p>
+  <details class="dq"><summary>Reveal the expected direction</summary>
+    <p>Overfitting is a leading hypothesis, but the curve alone does not prove the cause. Good controlled experiments: partial fine-tuning, lower learning rates, stronger training augmentation, and inspecting the split for duplicates.</p></details>
+  <h3>Verification checklist</h3>
+  <ul>
+    <li>Does the explanation fit the train/validation pattern?</li>
+    <li>Does the proposed experiment change one major factor at a time?</li>
+    <li>Does it preserve the held-out test set?</li>
+    <li>Does it consider data leakage, learning rate, and number of trainable layers?</li>
+    <li>Is the AI claiming certainty from evidence that cannot prove the cause?</li>
+  </ul>
+</section>
+
+<!-- 13 CASE -->
+<section class="sec" id="case" aria-labelledby="h-case" data-nav="Case study">
+  <div class="sec-head"><span class="num">13</span><h2 class="t" id="h-case">Interview case study: only 500 images</h2></div>
+  <p><b>Case:</b> a company has 500 labeled medical or industrial images and wants a custom classifier. A large CNN trained from scratch performs poorly. How would you approach it? Draft your plan, then open the strong answer.</p>
+  <details class="dq"><summary>Strong answer structure</summary>
+    <ol class="step6">
+      <li>Verify labels, class balance, and train/validation/test separation.</li>
+      <li>Start with a pretrained model from a reasonably relevant domain.</li>
+      <li>Replace the classifier head with the target number of classes.</li>
+      <li>Freeze the backbone and train the head as a baseline.</li>
+      <li>Evaluate on validation data and inspect mistakes.</li>
+      <li>Fine-tune selected layers with a small learning rate if needed.</li>
+      <li>Report the final result on an untouched test set.</li>
+    </ol></details>
+  <details class="dq"><summary>Follow-up: when might transfer learning help less?</summary>
+    <ul><li>When the source and target domains differ greatly.</li><li>When the pretrained model's input format is incompatible.</li><li>When labels or data splits are poor.</li><li>When the target task requires features not represented well by the source model.</li></ul></details>
+</section>
+
+<!-- 14 RECAP -->
+<section class="sec" id="recap" aria-labelledby="h-recap" data-nav="Recap">
+  <div class="sec-head"><span class="num">14</span><h2 class="t" id="h-recap">Rapid-fire revision</h2></div>
+  <p>Answer in your own words, then flip each card.</p>
+  <div class="fcs" id="fcs"></div>
+</section>
+
+</main>
+
+<footer>Computer Vision 3 post read</footer>
+
+<script>
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const fmt=n=>Number(n).toLocaleString('en-US');
+function h(tag,attrs,...kids){const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs||{})){if(k==='class')e.className=v;else if(k==='style')e.style.cssText=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else if(v!==false&&v!=null)e.setAttribute(k,v);}
+  kids.flat().forEach(c=>{if(c==null||c===false)return;e.append(c.nodeType?c:document.createTextNode(c));});return e;}
+function seg(host,items,cur,cb){host.innerHTML='';items.forEach(([v,l])=>{const b=h('button',{type:'button','aria-pressed':String(v===cur)},l);b.addEventListener('click',()=>{$$('button',host).forEach((x,i)=>x.setAttribute('aria-pressed',String(items[i][0]===v)));cb(v);});host.append(b);});}
+function mkGrid(host,rows,cols,fn){host.innerHTML='';host.style.setProperty('--cols',cols);const cells=[];for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const d=h('div',{class:'c'});fn&&fn(d,r,c);host.append(d);cells.push(d);}return cells;}
+
+/* nav */
+(function(){const toc=$('#toc');$$('section.sec').forEach(s=>toc.append(h('a',{href:'#'+s.id},s.dataset.nav)));const links=$$('a',toc);
+ const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('on',l.getAttribute('href')==='#'+e.target.id));const on=$('a.on',toc);if(on)on.scrollIntoView({block:'nearest',inline:'center'});}}),{rootMargin:'-30% 0px -60% 0px'});
+ $$('section.sec').forEach(s=>io.observe(s));const prog=$('#prog');const upd=()=>{const d=document.documentElement;prog.style.width=(100*d.scrollTop/(d.scrollHeight-d.clientHeight||1))+'%';};addEventListener('scroll',upd,{passive:true});upd();})();
+
+/* ---------- line chart ---------- */
+function lineChart(host,o){
+  host.innerHTML='';
+  const W=640,H=300,m={l:56,r:16,t:14,b:44},n=o.xs.length,dec=o.dec??3;
+  const all=o.series.flatMap(s=>s.vals);let lo=o.ymin??Math.min(...all),hi=o.ymax??Math.max(...all);if(o.ymin==null||o.ymax==null){const p=(hi-lo)*.08||.1;if(o.ymin==null)lo-=p;if(o.ymax==null)hi+=p;}
+  const x=i=>m.l+(n===1?0:i*(W-m.l-m.r)/(n-1)),y=v=>m.t+(hi-v)*(H-m.t-m.b)/(hi-lo||1);
+  let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" tabindex="0" role="img" aria-label="${o.aria||'Line chart'}. Use left and right arrow keys to read values.">`;
+  for(let k=0;k<=4;k++){const v=lo+(hi-lo)*k/4,yy=y(v);s+=`<line x1="${m.l}" x2="${W-m.r}" y1="${yy}" y2="${yy}" stroke="#D5C7A3" stroke-width="1"/><text x="${m.l-8}" y="${yy+4}" font-size="11" text-anchor="end">${(+v.toFixed(2)).toString()}</text>`;}
+  const step=Math.ceil(n/12);o.xs.forEach((l,i)=>{if(i%step===0||i===n-1)s+=`<text x="${x(i)}" y="${H-m.b+16}" font-size="11" text-anchor="middle">${l}</text>`;});
+  s+=`<text x="${(W+m.l)/2}" y="${H-6}" font-size="12" text-anchor="middle">${o.xTitle||'Epoch'}</text><text x="14" y="${H/2}" font-size="12" text-anchor="middle" transform="rotate(-90 14 ${H/2})">${o.yTitle||''}</text>`;
+  if(o.zero!==false&&lo<0&&hi>0)s+=`<line x1="${m.l}" x2="${W-m.r}" y1="${y(0)}" y2="${y(0)}" stroke="#18261F" stroke-width="1.5"/>`;
+  o.series.forEach(se=>{const pts=se.vals.map((v,i)=>`${x(i)},${y(v)}`).join(' ');
+    s+=`<polyline points="${pts}" fill="none" stroke="${se.color}" stroke-width="${se.w||2.5}" ${se.dash?`stroke-dasharray="${se.dash}"`:''} stroke-linejoin="round"/>`;
+    if(n<=30)se.vals.forEach((v,i)=>{s+=se.shape==='sq'?`<rect x="${x(i)-3.5}" y="${y(v)-3.5}" width="7" height="7" fill="${se.color}"/>`:se.shape==='tri'?`<path d="M${x(i)},${y(v)-4.5}l4.5,8h-9z" fill="${se.color}"/>`:`<circle cx="${x(i)}" cy="${y(v)}" r="3.3" fill="${se.color}"/>`;});});
+  (o.marks||[]).forEach(mk=>{s+=`<line x1="${x(mk.i)}" x2="${x(mk.i)}" y1="${m.t}" y2="${H-m.b}" stroke="${mk.color||'#18261F'}" stroke-width="2" stroke-dasharray="3 3"/><text x="${x(mk.i)+4}" y="${m.t+12}" font-size="11" font-weight="700" style="fill:#18261F">${mk.label}</text>`;});
+  s+=`<g id="hv" style="display:none"><line id="hl" y1="${m.t}" y2="${H-m.b}" stroke="#18261F" stroke-width="1.5"/></g></svg>`;
+  const leg=h('div',{class:'legend'});o.series.forEach(se=>leg.append(h('span',{},(()=>{const e=document.createElementNS('http://www.w3.org/2000/svg','svg');e.setAttribute('viewBox','0 0 34 12');e.innerHTML=`<line x1="2" x2="32" y1="6" y2="6" stroke="${se.color}" stroke-width="3" ${se.dash?`stroke-dasharray="${se.dash}"`:''}/>`+(se.shape==='sq'?`<rect x="13" y="2" width="8" height="8" fill="${se.color}"/>`:se.shape==='tri'?`<path d="M17,1l5,10h-10z" fill="${se.color}"/>`:`<circle cx="17" cy="6" r="4" fill="${se.color}"/>`);return e;})(),se.name)));
+  const box=h('div');box.innerHTML=s;const svg=box.firstChild;const rd=h('div',{class:'readout','aria-live':'polite'},o.hint||'Hover the chart, or focus it and use ← → keys, to read exact values.');
+  host.append(leg,box,rd);
+  const hv=$('#hv',svg),hl=$('#hl',svg);let idx=0;
+  function show(i){idx=Math.max(0,Math.min(n-1,i));hv.style.display='';hl.setAttribute('x1',x(idx));hl.setAttribute('x2',x(idx));
+    rd.innerHTML=`<b>${o.xName||'Epoch'} ${o.xs[idx]}</b> — `+o.series.map(se=>`${se.name}: <b>${se.vals[idx].toFixed(dec)}</b>`).join(' · ');}
+  svg.addEventListener('mousemove',e=>{const r=svg.getBoundingClientRect(),px=(e.clientX-r.left)*W/r.width;show(Math.round((px-m.l)/((W-m.l-m.r)/(n-1||1))));});
+  svg.addEventListener('touchmove',e=>{const t=e.touches[0],r=svg.getBoundingClientRect(),px=(t.clientX-r.left)*W/r.width;show(Math.round((px-m.l)/((W-m.l-m.r)/(n-1||1))));},{passive:true});
+  svg.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();show(idx+1);}if(e.key==='ArrowLeft'){e.preventDefault();show(idx-1);}});
+}
+const C={tr:'#1D5A41',va:'#9A5F33'};
+
+const arr=(a,f)=>a.map(f);
+function barRows(host,rows){rows.forEach(([l,pct,txt,alt])=>host.append(h('div',{class:'br'},h('span',{},l),h('div',{style:'display:flex;align-items:center'},h('div',{class:'tr',style:'flex:1'},h('div',{class:'fl'+(alt?' alt':''),style:`width:${pct}%`})),h('span',{class:'vl'},txt)))));}
+
+/* ---------- 2 swap head ---------- */
+(function(){
+  const M={src:{head:'Classifier → 1,000 ImageNet classes',read:'<b>Source model.</b> Trained on ImageNet. The backbone has learned reusable visual patterns; the classifier predicts source-dataset classes.'},tgt:{head:'New classifier → 10 landmarks',read:'<b>Target model.</b> Same pretrained backbone, but the classifier is replaced so it outputs one score per landmark class.'}};
+  let cur='tgt';const pipe=$('#sw-pipe');
+  function draw(){pipe.innerHTML='';pipe.append(h('div',{class:'node io'},cur==='src'?'ImageNet images':'Landmark images'),h('span',{class:'sep'},'→'),h('div',{class:'node',style:'background:var(--sand);border-style:dashed;color:var(--g900)'},'Pretrained backbone (reused)'),h('span',{class:'sep'},'→'),h('div',{class:'node',style:cur==='tgt'?'background:var(--g700);color:#fff':''},M[cur].head));$('#sw-read').innerHTML=M[cur].read;}
+  seg($('#sw-seg'),[['src','Pretrained source model'],['tgt','Adapted target model']],'tgt',v=>{cur=v;draw();});draw();
+})();
+
+/* ---------- 3 hierarchy ---------- */
+(function(){
+  const S=[['Input pixels','Keep','Raw RGB values of the image.'],['Early layers','Reuse','Edges, colour contrasts, corners. Broadly useful for almost any image task.'],['Middle layers','Reuse (candidate to adapt)','Textures, repeated patterns, parts and shapes.'],['Late features','Reuse or adapt','Combinations of features useful for the <i>source</i> task.'],['Classifier','Replace','Outputs source classes. For landmark classification this is the part most likely to need replacement.']];
+  let cur=1;const p=$('#hi-pipe');
+  S.forEach((s,i)=>{if(i)p.append(h('span',{class:'sep'},'→'));const b=h('button',{type:'button',class:'node','aria-pressed':'false'},s[0]);b.addEventListener('click',()=>{cur=i;u();});p.append(b);});
+  function u(){$$('.node',p).forEach((b,i)=>b.setAttribute('aria-pressed',String(i===cur)));$('#hi-read').innerHTML=`<b>${S[cur][0]}</b> — verdict: <b>${S[cur][1]}</b><br>${S[cur][2]}`;}u();
+})();
+
+/* ---------- 4 unfreeze slider ---------- */
+(function(){
+  const B=[['Conv block 1',38720],['Conv block 2',221440],['Conv block 3',1475328],['Conv block 4',5899776],['Conv block 5',7079424]];
+  const HEAD=12850698,TOT=27565386;
+  const r=$('#unf-r'),box=$('#unf-blocks');
+  function draw(){const k=+r.value;$('#unf-v').textContent=k;box.innerHTML='';
+    B.forEach(([n,p],i)=>{const on=i>=5-k;box.append(h('div',{class:'blk'+(on?'':' fz')},h('b',{},n),fmt(p),h('span',{class:'st'},on?'trainable':'frozen')));});
+    box.append(h('div',{class:'blk hd'},h('b',{},'New head'),fmt(HEAD),h('span',{class:'st'},'trainable')));
+    const tr=HEAD+B.slice(5-k).reduce((a,b)=>a+b[1],0),fz=TOT-tr;
+    const bars=$('#unf-bars');bars.innerHTML='';barRows(bars,[['Trainable',tr/TOT*100,fmt(tr)],['Frozen',fz/TOT*100,fmt(fz),true]]);
+    $('#unf-read').innerHTML=(k===0?'<b>Feature extraction:</b> only the new head trains. ':k===5?'<b>Fine-tuning all layers.</b> ':k===1?'<b>Safe starting point for fine-tuning:</b> the last block (<code>features[24:]</code>) is unfrozen. ':'')+`Trainable ${fmt(tr)} of ${fmt(TOT)} parameters (${(tr/TOT*100).toFixed(1)}%).`;}
+  r.addEventListener('input',draw);draw();
+  console.assert(HEAD+B[4][1]===19930122&&B.reduce((a,b)=>a+b[1],0)===14714688);
+})();
+
+/* ---------- 5 dataset ---------- */
+(function(){
+  barRows($('#sp-bars'),[['Train',100,'737 images'],['Validation',155/737*100,'155 images',true],['Test',43/737*100,'43 images']]);
+  const C=['01.Niagara_Falls','02.Golden_Gate_Bridge','03.Kantanagar_Temple','04.Eiffel_Tower','05.Washington_Monument','06.Hanging_Temple','07.Forth_Bridge','08.Gateway_of_India','09.Machu_Picchu','10.Great_Wall_of_China'];
+  const box=$('#sp-cls');C.forEach((c,i)=>{const b=h('button',{type:'button',class:'chip','aria-pressed':'false'},c.slice(3).replace(/_/g,' '));b.addEventListener('click',()=>{$$('button',box).forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');$('#sp-read').innerHTML=`<b>${c}</b> → index <b>${i}</b> in train, validation and test.`;});box.append(b);});
+  $('#sp-read').textContent='Select a class to see its index.';
+  const T={ok:'The model predicts index 3. Every split maps 3 → Eiffel Tower, so the prediction is <b>counted correct</b>.',bad:'The model predicts index 3 (Eiffel Tower in training), but this split maps 3 to another landmark, so a sensible prediction is <b>counted wrong</b>. The integer label must refer to the same landmark in every split.'};
+  let m='ok';const d=()=>$('#mp-read').innerHTML=T[m];seg($('#mp-seg'),[['ok','Mappings identical'],['bad','Mappings differ']],'ok',v=>{m=v;d();});d();
+  const L=['The train, validation and test folders exist.','The class-to-index mapping is identical across splits.','There are no duplicate or near-duplicate images across splits.','The validation set is used for model/parameter decisions.','The test set is used only for the final report.'];
+  L.forEach((t,i)=>$('#chk').append(h('label',{class:'chk',for:'ck'+i},h('input',{type:'checkbox',id:'ck'+i}),t)));
+})();
+
+/* ---------- 6 preprocessing ---------- */
+(function(){
+  const M=[['R',.485,.229],['G',.456,.224],['B',.406,.225]],val=[255,140,0];
+  const tb=$('#pp-tab');const cells=[];
+  M.forEach(([n,m,s],i)=>{const inp=h('input',{type:'number',min:0,max:255,value:val[i],'aria-label':n+' pixel value'});const sc=h('td',{class:'mono'}),no=h('td',{class:'mono',style:'font-weight:700'});inp.addEventListener('input',()=>draw());cells.push([inp,sc,no,m,s]);tb.append(h('tr',{},h('td',{class:'k'},n),h('td',{},inp),sc,h('td',{class:'mono'},m),h('td',{class:'mono'},s),no));});
+  function draw(){cells.forEach(([inp,sc,no,m,s])=>{const v=Math.max(0,Math.min(255,+inp.value||0))/255;sc.textContent=v.toFixed(3);no.textContent=((v-m)/s).toFixed(3);});}
+  draw();const pre=[['Orange [255,140,0]',[255,140,0]],['Black',[0,0,0]],['White',[255,255,255]],['The channel means ×255',[124,116,104]]];
+  pre.forEach(([l,a])=>{const b=h('button',{type:'button',class:'chip'},l);b.addEventListener('click',()=>{cells.forEach((c,i)=>c[0].value=a[i]);draw();});$('#pp-pre').append(b);});
+})();
+
+/* ---------- 7 build anatomy ---------- */
+(function(){
+  const P=[['Input','224×224 RGB, preprocessed','',0,'io'],['Conv features','Pretrained VGG16 convolutional blocks. <b>Frozen</b> (<code>requires_grad=False</code>).','14,714,688 parameters',14714688,'fz'],['Pool → 25,088','512 × 7 × 7 = 25,088 features for 224×224 inputs.','No parameters',0,'fz'],['Linear 25088→512','New hidden layer. <b>Trainable.</b>','12,845,568 parameters',12845568,'tr'],['ReLU + Dropout(0.3)','New. Non-linearity, then dropout during training.','No parameters',0,'tr'],['Linear 512→10','New output layer: one score per landmark class. <b>Trainable.</b>','5,130 parameters',5130,'tr']];
+  const p=$('#bd-pipe');let cur=5;
+  P.forEach((x,i)=>{if(i)p.append(h('span',{class:'sep'},'→'));const b=h('button',{type:'button',class:'node'+(x[4]==='io'?' io':''),'aria-pressed':'false',style:x[4]==='fz'?'border-style:dashed':''},x[0]);if(x[4]!=='io')b.addEventListener('click',()=>{cur=i;u();});p.append(b);});
+  function u(){$$('.node',p).forEach((b,i)=>b.setAttribute('aria-pressed',String(i===cur)));$('#bd-read').innerHTML=`<b>${P[cur][0]}</b> — ${P[cur][1]}<br>${P[cur][2]}`;}u();
+  barRows($('#bd-bars'),[['Total',100,'27,565,386'],['Frozen',14714688/27565386*100,'14,714,688',true],['Trainable',12850698/27565386*100,'12,850,698']]);
+})();
+
+/* ---------- 8 training charts ---------- */
+const TR={tl:[1.1569,.1311,.0445,.0065,.0033],ta:[.720,.974,.986,.997,1.0],vl:[.9511,.4513,.3945,.3745,.3728],va:[.806,.884,.897,.916,.897]};
+function metricViz(host,title,R,xs,loss){
+  const ctl=h('div',{class:'controls'}),sg=h('div',{class:'seg',role:'group','aria-label':'Metric'}),ch=h('div');ctl.append(sg);
+  host.append(h('p',{class:'vt'},'Visualizer · '+title),h('p',{class:'vd'},'Recorded results. Hover the chart or use ← → keys for exact values.'),ctl,ch);
+  let mode=loss?'loss':'acc';
+  function draw(){if(mode==='gap')lineChart(ch,{xs,dec:3,yTitle:'Train acc − val acc',series:[{name:'gap',vals:R.ta.map((v,i)=>v-R.va[i]),color:C.tr}]});
+    else{const t=mode==='loss'?R.tl:R.ta,v=mode==='loss'?R.vl:R.va;lineChart(ch,{xs,dec:mode==='loss'?4:3,yTitle:mode==='loss'?'Loss':'Accuracy',series:[{name:'train',vals:t,color:C.tr,shape:'circle'},{name:'validation',vals:v,color:C.va,dash:'7 4',shape:'sq'}]});}}
+  seg(sg,(loss?[['loss','Loss']]:[]).concat([['acc','Accuracy'],['gap','Gap (train − val acc)']]),mode,v=>{mode=v;draw();});draw();
+}
+metricViz($('#run-tr'),'Training the new head (5 epochs)',TR,[1,2,3,4,5],true);
+TR.va.forEach((_,i)=>$('#tr-tab').append(h('tr',{},h('td',{},i+1),h('td',{class:'mono'},TR.tl[i].toFixed(4)),h('td',{class:'mono'},TR.ta[i].toFixed(3)),h('td',{class:'mono'},TR.vl[i].toFixed(4)),h('td',{class:'mono'},TR.va[i].toFixed(3)))));
+metricViz($('#run-ft'),'Fine-tuning the last block (3 epochs)',{ta:[1,1,.999],va:[.916,.923,.910]},[1,2,3],false);
+(function(){const E={a:['Both improve','The head is learning useful target distinctions.'],b:['Training improves, validation stalls or worsens','Overfitting may be occurring.'],c:['Both remain poor','Inspect labels, preprocessing, learning rate, and whether the target domain is very different.']};
+  let m='a';const d=()=>$('#ev-read').innerHTML=`<b>${E[m][0]}:</b> ${E[m][1]}`+(m==='a'?'<br><i>In the recorded run:</i> validation accuracy rose from 0.806 to 0.897 over five epochs.':'');
+  seg($('#ev-seg'),[['a','Both improve'],['b','Train ↑, validation flat/↓'],['c','Both poor']],'a',v=>{m=v;d();});d();})();
+
+/* ---------- 9 test grid ---------- */
+(function(){
+  const bad=new Set([0]);const g=$('#ts-g');
+  function draw(){g.innerHTML='';for(let i=0;i<43;i++){const b=h('button',{type:'button',class:'dot c'+(bad.has(i)?' bad':''),'aria-pressed':String(bad.has(i)),'aria-label':`Test image ${i+1}: ${bad.has(i)?'wrong':'correct'}`},bad.has(i)?'✗':'✓');b.className='dot'+(bad.has(i)?' bad':'');b.addEventListener('click',()=>{bad.has(i)?bad.delete(i):bad.add(i);draw();});g.append(b);}
+    const c=43-bad.size;$('#ts-read').innerHTML=`<b>${c} of 43</b> correct → accuracy <b>${(c/43*100).toFixed(2)}%</b>. One image ≈ ${(100/43).toFixed(1)} percentage points.`;}
+  draw();
+})();
+
+/* ---------- 10 lr bars ---------- */
+barRows($('#lr-bars'),[['Pretrained block (features[24:])',10,'lr 1e-5',true],['New classifier head',100,'lr 1e-4']]);
+
+/* ---------- 11 troubleshooting ---------- */
+(function(){
+  const S=[['Accuracy near chance','Check label mapping, final output size, preprocessing, and whether the model is actually pretrained.'],['Training accuracy high, validation poor','Small dataset, leakage/duplicates, too many trainable layers, excessive fine-tuning.'],['Both train and validation poor','Underfitting, frozen features unsuitable for target domain, learning-rate/head design issues.'],['Loss becomes NaN','Learning rate too high, invalid inputs, numerical instability.'],['CUDA out-of-memory','Reduce batch size, use smaller input batches, clear unused tensors.'],['Validation results inconsistent','Check model.eval(), fixed split, random seeds, and data leakage.']];
+  const box=$('#tb-seg');S.forEach(([s,c])=>{const b=h('button',{type:'button',class:'chip','aria-pressed':'false'},s);b.addEventListener('click',()=>{$$('button',box).forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');$('#tb-read').innerHTML=`<b>${s}</b><br>Plausible checks: ${c}`;});box.append(b);});
+  $('#tb-read').textContent='Select a symptom to see plausible checks.';
+})();
+
+/* ---------- 12 scenario ---------- */
+barRows($('#sc-bars'),[['Feature extraction · train',86,'86%'],['Feature extraction · val',79,'79%',true],['Fine-tune all · train',98,'98%'],['Fine-tune all · val',71,'71%',true]]);
+
+/* ---------- quizzes ---------- */
+const QZ={
+ q0:{q:'Which approach would you choose for ~70 images per class and 10 landmark classes?',o:['Train a deep CNN from scratch; a small dataset is enough for millions of parameters.','Start with a CNN pretrained on a large image dataset, replace its classifier, and adapt it.','Use the test set as extra training data.'],a:1,e:'A pretrained model provides reusable visual features. The test set must remain held out for final evaluation.'},
+ q1:{q:'For landmark classification, which part is most likely to need replacement?',o:['The early edge detectors.','The final classifier that outputs source classes.','Every convolution filter must always be discarded.'],a:1,e:'The classifier outputs source-dataset classes, so it is the part that must change.'},
+ q2:{q:'You have only 500 labeled images and a pretrained CNN from a reasonably similar domain. What is the best starting point?',o:['Freeze the backbone and train a new classifier first.','Randomly reinitialize every layer.','Unfreeze every layer and use a very large learning rate.','Select the best model using test accuracy after every epoch.'],a:0,e:'Feature extraction is a sensible baseline for limited data. If it underfits or the domain differs a lot, test fine-tuning selected layers. Model selection uses validation data, not the test set.'},
+ q3:{q:'Why do we normalize images with the ImageNet mean and standard deviation before feeding them to a pretrained VGG16?',o:['To make every image contain the same landmark.','To match the input scale/distribution expected by the pretrained weights.','To increase the number of training images.','To freeze the convolutional layers.'],a:1,e:'The pretrained weights were learned with a defined preprocessing pipeline. Normalization keeps target inputs consistent with it; it adds no data and freezes nothing.'},
+ q4:{q:'After freezing the backbone and replacing the classifier, which parameters should the optimizer update in the first experiment?',o:['Only the newly added classifier parameters.','All pretrained parameters, even though they are frozen.','No parameters at all.','Only the input image pixels.'],a:0,e:'Feature extraction keeps pretrained weights fixed and learns the new head. The optimizer should receive only parameters with requires_grad=True.'},
+ q5:{q:'Why do we use a smaller learning rate for pretrained layers during fine-tuning?',o:['Pretrained weights already encode useful features; large updates can damage them.','It increases the number of classes automatically.','It prevents the need for validation.','It guarantees 100% accuracy.'],a:0,e:'Smaller updates reduce the risk of overwriting useful representations too aggressively. Validation is still required, and performance is never guaranteed.'}
+};
+$$('[data-quiz]').forEach(host=>{const q=QZ[host.dataset.quiz],name='qz-'+host.dataset.quiz;const fb=h('div',{class:'qfb',role:'status','aria-live':'polite'}),fs=h('fieldset',{},h('legend',{class:'sr'},q.q));
+  q.o.forEach((t,i)=>{const id=name+i,inp=h('input',{type:'radio',name,id}),row=h('div',{class:'qo'},inp,h('label',{for:id},t));
+    inp.addEventListener('change',()=>{$$('.qo',fs).forEach(r=>r.classList.remove('right','wrong'));if(i===q.a){row.classList.add('right');fb.innerHTML='<b>Correct.</b> '+q.e;$$('input',fs).forEach(x=>x.disabled=true);}else{row.classList.add('wrong');fb.innerHTML='<b>Not quite.</b> Try another option.';}});fs.append(row);});
+  host.append(h('p',{class:'ql'},'Check yourself'),h('p',{class:'qt'},q.q),fs,fb);});
+
+/* ---------- flashcards ---------- */
+[['Transfer learning?','Reusing knowledge learned on a source task for a target task.'],['Feature extraction?','Freeze the pretrained backbone and train the new head.'],['Fine-tuning?','Unfreeze some or all pretrained layers and continue training.'],['Why replace the classifier?','The target task has a different set of labels.'],['Why use ImageNet preprocessing?','To match the input distribution expected by the pretrained weights.'],['Why not use test accuracy for tuning?','It makes the final test estimate biased by repeated model selection.'],['Does transfer learning guarantee better accuracy?','No; validate it on the actual task.'],['What is a good first strategy for a small dataset?','Start with a frozen backbone and a new head, then test fine-tuning if needed.']
+].forEach(([q,a])=>{const b=h('button',{type:'button',class:'fc','aria-expanded':'false',style:'min-height:110px'},h('div',{class:'q'},q),h('span',{class:'hint'},'Click to reveal'),h('div',{class:'a'},a));b.addEventListener('click',()=>b.setAttribute('aria-expanded',String(b.getAttribute('aria-expanded')!=='true')));$('#fcs').append(b);});
+</script>
+</body>
+</html>
